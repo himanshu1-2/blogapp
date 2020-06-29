@@ -5,9 +5,10 @@ const redisUrl = 'redis://127.0.0.1:6379'
 const client = redis.createClient(redisUrl)
 const util = require('util')
 client.hget = util.promisify(client.hget)
-mongoose.Query.prototype.cache = function (option={}) {
+mongoose.Query.prototype.cache = function (options={}) {
     this.useCache = true
-    this.hashKey=JSON.stringify(option.key||'')
+    this.hashKey=JSON.stringify(options.key||'')
+    console.log("sss")
     return this
 }
 mongoose.Query.prototype.exec = async function () {
@@ -18,12 +19,13 @@ mongoose.Query.prototype.exec = async function () {
     const key =
         JSON.stringify(
             Object.assign({}, this.getQuery(), {
-                collection: this.this.mongooseCollection.name
+                collection: this.mongooseCollection.name
 
             }))
 
     const cachedBlogs = await client.hget(this.hashKey,key)
     if (this.cachedBlogs) {
+        console.log('cached')
         const doc = JSON.parse(cachedBlogs)
         return Array.isArray(doc)
             ? doc.map(d => new this.model(d)) :
